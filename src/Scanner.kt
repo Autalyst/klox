@@ -70,7 +70,7 @@ class Scanner(
                 } else if (isAlpha(c)) {
                     identifier()
                 } else {
-                    error(line, "Unexpected character: $c")
+                    OutputHandler.error(line, "Unexpected character: $c")
                 }
             }
         }
@@ -85,7 +85,7 @@ class Scanner(
         }
 
         if (isAtEnd()) {
-            error(line, "Unterminated string encountered")
+            OutputHandler.error(line, "Unterminated string encountered")
             return
         }
 

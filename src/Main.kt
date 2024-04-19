@@ -41,8 +41,13 @@ fun runPrompt() {
 fun run(source: String) {
     val scanner = Scanner(source)
     val tokens = scanner.scanTokens()
+    val parser = Parser(tokens)
+    val expression = parser.parse()
 
-    for (token in tokens) {
-        println(token)
+    // detect syntax error
+    if (hasError) {
+        return
     }
+
+    println(expression)
 }
