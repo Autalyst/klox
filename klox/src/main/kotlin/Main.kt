@@ -21,8 +21,12 @@ fun runFile(path: String) {
     val fileAsString = String(byteArray, Charset.defaultCharset())
     run(fileAsString)
 
-    if (hasError) {
+    if (hadError) {
         exitProcess(65)
+    }
+
+    if (hadRuntimeError) {
+        exitProcess(70)
     }
 }
 
@@ -34,21 +38,20 @@ fun runPrompt() {
         print("> ")
         val line = reader.readLine() ?: break
         run(line)
-        hasError = false
+        hadError = false
     }
 }
 
 fun run(source: String) {
-    val scanner = Scanner(source)
-    val tokens = scanner.scanTokens()
-    val parser = Parser(tokens)
-    val expression = parser.parse()
+    val tokens = Scanner(source).scanTokens()
+    val expression = Parser(tokens).parse()
 
     // detect syntax error
-    if (hasError || expression == null) {
+    if (hadError || expression == null) {
         return
     }
 
-    val astPrinter = AstPrinter()
-    println(astPrinter.print(expression))
+    Interpreter().interpret(expression)
+//    val astPrinter = AstPrinter()
+//    println(astPrinter.print(expression))
 }

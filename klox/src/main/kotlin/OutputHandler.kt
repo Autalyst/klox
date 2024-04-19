@@ -1,4 +1,5 @@
-var hasError = false
+var hadError = false
+var hadRuntimeError = false
 
 object OutputHandler {
     fun error(lineNumber: Int, message: String) {
@@ -15,6 +16,11 @@ object OutputHandler {
 
     fun report(lineNumber: Int, where: String, message: String) {
         System.err.println("[line $lineNumber] Error$where: $message")
-        hasError = true
+        hadError = true
+    }
+
+    fun runtimeError(error: Interpreter.RuntimeError) {
+        System.err.println("${error.message}\n[line ${error.token.line}]")
+        hadRuntimeError = true
     }
 }
