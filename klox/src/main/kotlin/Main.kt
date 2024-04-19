@@ -44,14 +44,14 @@ fun runPrompt() {
 
 fun run(source: String) {
     val tokens = Scanner(source).scanTokens()
-    val expression = Parser(tokens).parse()
+    val statements = Parser(tokens).parse()
 
     // detect syntax error
-    if (hadError || expression == null) {
+    if (hadError) {
         return
     }
 
-    Interpreter().interpret(expression)
+    Interpreter().interpret(statements)
 //    val astPrinter = ast.AstPrinter()
 //    println(astPrinter.print(expression))
 }
