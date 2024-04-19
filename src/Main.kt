@@ -45,9 +45,10 @@ fun run(source: String) {
     val expression = parser.parse()
 
     // detect syntax error
-    if (hasError) {
+    if (hasError || expression == null) {
         return
     }
 
-    println(expression)
+    val astPrinter = AstPrinter()
+    println(astPrinter.print(expression))
 }
