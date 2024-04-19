@@ -1,3 +1,7 @@
+package ast
+
+import Token
+
 abstract class Expr {
     interface Visitor<R> {
         fun visitBinaryExpr(expr: Binary): R

@@ -52,6 +52,6 @@ fun run(source: String) {
     }
 
     Interpreter().interpret(expression)
-//    val astPrinter = AstPrinter()
+//    val astPrinter = ast.AstPrinter()
 //    println(astPrinter.print(expression))
 }

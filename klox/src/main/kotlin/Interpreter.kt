@@ -1,6 +1,8 @@
 import TokenType.*
+import ast.Expr
+import ast.Stmt
 
-class Interpreter: Expr.Visitor<Any?> {
+class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     fun interpret(expression: Expr) {
         try {
             val value = evaluate(expression)
@@ -63,6 +65,11 @@ class Interpreter: Expr.Visitor<Any?> {
 
     private fun evaluate(expr: Expr): Any? {
         return expr.accept(this)
+    }
+
+    override fun visitExpressionStmt(stmt: Stmt.Expression) {
+        evaluate(stmt.expression)
+        return null
     }
 
     private fun isTruthy(value: Any?): Boolean {
