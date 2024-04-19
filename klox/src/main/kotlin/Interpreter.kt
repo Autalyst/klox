@@ -14,41 +14,21 @@ class Interpreter: Expr.Visitor<Any?> {
         val left = evaluate(expr.left)
         val right = evaluate(expr.right)
 
-        val assertNumbers = {
+        val asNumbers = fun (predicate: (Double, Double) -> Any?): Any? {
             checkNumberOperands(expr.operator, left, right)
+            return predicate(left as Double, right as Double)
         }
 
         return when (expr.operator.type) {
             BANG_EQUAL -> !isEqual(left, right)
             EQUAL_EQUAL -> isEqual(left, right)
-            GREATER -> {
-                assertNumbers()
-                left as Double > right as Double
-            }
-            GREATER_EQUAL -> {
-                assertNumbers()
-                left as Double >= right as Double
-            }
-            LESS -> {
-                assertNumbers()
-                (left as Double) < (right as Double)
-            }
-            LESS_EQUAL -> {
-                assertNumbers()
-                left as Double <= right as Double
-            }
-            MINUS -> {
-                assertNumbers()
-                left as Double - right as Double
-            }
-            SLASH -> {
-                assertNumbers()
-                left as Double / right as Double
-            }
-            STAR -> {
-                assertNumbers()
-                left as Double * right as Double
-            }
+            GREATER -> asNumbers { a, b -> a > b }
+            GREATER_EQUAL -> asNumbers { a, b -> a >= b }
+            LESS -> asNumbers { a, b -> a < b }
+            LESS_EQUAL -> asNumbers { a, b -> a <= b }
+            MINUS -> asNumbers { a, b -> a - b }
+            SLASH -> asNumbers { a, b -> a / b }
+            STAR -> asNumbers { a, b -> a * b }
             PLUS -> {
                 when {
                     left is Double && right is Double -> left + right
