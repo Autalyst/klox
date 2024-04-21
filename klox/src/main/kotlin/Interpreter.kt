@@ -3,10 +3,14 @@ import ast.Expr
 import ast.Stmt
 
 class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
-    fun interpret(statements: List<Stmt>) {
+    private val environment = Environment()
+
+    fun interpret(statements: List<Stmt?>) {
         try {
             for (statement in statements) {
-                execute(statement)
+                if (statement != null) {
+                    execute(statement)
+                }
             }
         } catch (error: RuntimeError) {
             OutputHandler.runtimeError(error)
@@ -64,6 +68,10 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         }
     }
 
+    override fun visitVariableExpr(expr: Expr.Variable): Any? {
+        return environment.get(expr.name)
+    }
+
     private fun evaluate(expr: Expr): Any? {
         return expr.accept(this)
     }
@@ -79,6 +87,15 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     override fun visitPrintStmt(stmt: Stmt.Print) {
         val value = evaluate(stmt.expression)
         println(stringify(value))
+    }
+
+    override fun visitVarStmt(stmt: Stmt.Var) {
+        var value: Any? = null
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer)
+        }
+
+        environment.define(stmt.name.lexeme, value)
     }
 
     private fun isTruthy(value: Any?): Boolean {

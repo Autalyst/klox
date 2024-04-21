@@ -7,23 +7,45 @@ class Parser(
 ) {
     private var current = 0
 
-    fun parse(): List<Stmt> {
-        val statements = mutableListOf<Stmt>()
+    // program → declaration* EOF
+    fun parse(): List<Stmt?> {
+        val statements = mutableListOf<Stmt?>()
 
         while(!isAtEnd()) {
-            statements.add(statement())
+            statements.add(declaration())
         }
 
         return statements
-//        return try {
-//            expression()
-//        } catch (error: ParseError) {
-//            null
-//        }
     }
 
     // -- PRODUCTIONS -- //
-    // program → statement* EOF
+    // declaration → varDecl | statement
+    private fun declaration(): Stmt? {
+        try {
+            if (match(VAR)) {
+                return varDeclaration()
+            }
+
+            return statement()
+        } catch (error: ParseError) {
+            synchronize()
+            return null
+        }
+    }
+
+    // varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
+    private fun varDeclaration(): Stmt {
+        val name: Token = consume(IDENTIFIER, "Expect variable name")
+        var initializer: Expr? = null
+        if (match(EQUAL)) {
+            initializer = expression()
+        }
+
+        consume(SEMICOLON, "Expect ';' after variable declaration")
+        return Stmt.Var(name, initializer)
+    }
+
+    // statement → exprStmt | printStmt
     private fun statement(): Stmt {
         if (match(PRINT)) {
             return printStatement()
@@ -119,6 +141,7 @@ class Parser(
             match(TRUE) -> return Expr.Literal(true)
             match(NIL) -> return Expr.Literal(null)
             match(NUMBER, STRING) -> return Expr.Literal(previous().literal)
+            match(IDENTIFIER) -> return Expr.Variable(previous())
             match(LEFT_PAREN) -> {
                 val expr = expression()
                 consume(RIGHT_PAREN, "Expect ')' after expression.")
