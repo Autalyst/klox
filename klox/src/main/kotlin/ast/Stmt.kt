@@ -4,9 +4,18 @@ import Token
 
 abstract class Stmt {
     interface Visitor<R> {
+        fun visitBlockStmt(stmt: Block): R
         fun visitExpressionStmt(stmt: Expression): R
         fun visitPrintStmt(stmt: Print): R
         fun visitVarStmt(stmt: Var): R
+    }
+
+    class Block(
+        val statements: List<Stmt?>
+    ): Stmt() {
+        override fun <R> accept(visitor: Visitor<R>): R {
+            return visitor.visitBlockStmt(this)
+        }
     }
 
     class Expression(

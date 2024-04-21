@@ -3,7 +3,7 @@ import ast.Expr
 import ast.Stmt
 
 class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
-    private val environment = Environment()
+    private var environment = Environment()
 
     fun interpret(statements: List<Stmt?>) {
         try {
@@ -82,8 +82,31 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         return expr.accept(this)
     }
 
-    private fun execute(stmt: Stmt) {
+    private fun execute(stmt: Stmt?) {
+        if (stmt == null) {
+            return
+        }
         stmt.accept(this)
+    }
+
+    override fun visitBlockStmt(stmt: Stmt.Block) {
+        executeBlock(stmt.statements, Environment(environment))
+    }
+
+    private fun executeBlock(
+        statements: List<Stmt?>,
+        environment: Environment
+    ) {
+        val previous = this.environment
+        try {
+            this.environment = environment
+
+            for (statement in statements) {
+                execute(statement)
+            }
+        } finally {
+            this.environment = previous
+        }
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
