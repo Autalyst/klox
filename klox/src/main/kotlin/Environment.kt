@@ -10,6 +10,15 @@ class Environment {
             return values[name.lexeme]
         }
 
-        throw Interpreter.RuntimeError(name, "Undefined variable `${name.lexeme}`.")
+        throw Interpreter.RuntimeError(name, "Undefined variable '${name.lexeme}'.")
+    }
+
+    fun assign(name: Token, value: Any?) {
+        if (values.containsKey(name.lexeme)) {
+            values[name.lexeme] = value
+            return
+        }
+
+        throw Interpreter.RuntimeError(name, "Undefined variable '${name.lexeme}'.")
     }
 }
