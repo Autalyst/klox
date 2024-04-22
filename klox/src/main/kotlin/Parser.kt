@@ -45,8 +45,11 @@ class Parser(
         return Stmt.Var(name, initializer)
     }
 
-    // statement → exprStmt | printStmt | block
+    // statement → exprStmt | ifStmt | printStmt | block
     private fun statement(): Stmt {
+        if (match(IF)) {
+            return ifStatement()
+        }
         if (match(PRINT)) {
             return printStatement()
         }
@@ -56,6 +59,21 @@ class Parser(
         }
 
         return expressionStatement()
+    }
+
+    // ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
+    private fun ifStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ') after 'if' condition.")
+
+        val thenBranch = statement()
+        var elseBranch: Stmt? = null
+        if (match(ELSE)) {
+            elseBranch = statement()
+        }
+
+        return Stmt.If(condition, thenBranch, elseBranch)
     }
 
     private fun printStatement(): Stmt {
@@ -86,9 +104,9 @@ class Parser(
         return assignment()
     }
 
-    // assignment → IDENTIFIER "=" assignment | equality ;
+    // assignment → IDENTIFIER "=" assignment | logic_or ;
     private fun assignment(): Expr {
-        val expr: Expr = equality()
+        val expr: Expr = logicOr()
 
         if (match(EQUAL)) {
             val equals = previous()
@@ -100,6 +118,32 @@ class Parser(
             }
 
             error(equals, "Invalid assignment target.")
+        }
+
+        return expr
+    }
+
+    // logic_or → logic_and ( "or" logic_and )* ;
+    private fun logicOr(): Expr {
+        var expr: Expr = logicAnd()
+
+        while (match(OR)) {
+            val operator = previous()
+            val right = logicAnd()
+            expr = Expr.Logical(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    // logic_and  → equality ( "and" equality )* ;
+    private fun logicAnd(): Expr {
+        var expr = equality()
+
+        while (match(AND)) {
+            val operator = previous()
+            val right = equality()
+            expr = Expr.Logical(expr, operator, right)
         }
 
         return expr
