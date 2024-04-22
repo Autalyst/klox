@@ -45,8 +45,12 @@ class Parser(
         return Stmt.Var(name, initializer)
     }
 
-    // statement → exprStmt | ifStmt | printStmt | whileStmt | block
+    // statement → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block
     private fun statement(): Stmt {
+        if (match(FOR)) {
+            return forStatement()
+        }
+
         if (match(IF)) {
             return ifStatement()
         }
@@ -64,6 +68,40 @@ class Parser(
         }
 
         return expressionStatement()
+    }
+
+    // forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+    private fun forStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.")
+        val initializer: Stmt? = if (match(SEMICOLON)) {
+            null
+        } else if (match(VAR)) {
+            varDeclaration()
+        } else {
+            expressionStatement()
+        }
+
+        var condition: Expr? = if (!check(SEMICOLON)) expression() else null
+        consume(SEMICOLON, "Expect ';' after loop condition.")
+
+        val increment: Expr? = if(!check(RIGHT_PAREN)) expression() else null
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        var body = statement()
+        increment?.let {
+            body = Stmt.Block(listOf(body, Stmt.Expression(it)))
+        }
+
+        if (condition == null) {
+            condition = Expr.Literal(true)
+        }
+        body = Stmt.While(condition, body)
+
+        initializer?.let {
+            body = Stmt.Block(listOf(it, body))
+        }
+
+        return body
     }
 
     // ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
