@@ -151,6 +151,12 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         environment.define(stmt.name.lexeme, value)
     }
 
+    override fun visitWhileStmt(stmt: Stmt.While) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body)
+        }
+    }
+
     private fun isTruthy(value: Any?): Boolean {
         if (value == null)
         {

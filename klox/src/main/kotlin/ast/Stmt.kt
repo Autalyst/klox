@@ -9,6 +9,7 @@ abstract class Stmt {
         fun visitIfStmt(stmt: If): R
         fun visitPrintStmt(stmt: Print): R
         fun visitVarStmt(stmt: Var): R
+        fun visitWhileStmt(stmt: While): R
     }
 
     class Block(
@@ -51,6 +52,15 @@ abstract class Stmt {
     ): Stmt() {
         override fun <R> accept(visitor: Visitor<R>): R {
             return visitor.visitVarStmt(this)
+        }
+    }
+
+    class While(
+        val condition: Expr,
+        val body: Stmt
+    ): Stmt() {
+        override fun <R> accept(visitor: Visitor<R>): R {
+            return visitor.visitWhileStmt(this)
         }
     }
 
