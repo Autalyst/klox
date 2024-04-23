@@ -97,7 +97,7 @@ class Parser(
             expressionStatement()
         }
 
-        var condition: Expr? = if (!check(SEMICOLON)) expression() else null
+        val condition: Expr = if (!check(SEMICOLON)) expression() else Expr.Literal(true)
         consume(SEMICOLON, "Expect ';' after loop condition.")
 
         val increment: Expr? = if(!check(RIGHT_PAREN)) expression() else null
@@ -108,9 +108,6 @@ class Parser(
             body = Stmt.Block(listOf(body, Stmt.Expression(it)))
         }
 
-        if (condition == null) {
-            condition = Expr.Literal(true)
-        }
         body = Stmt.While(condition, body)
 
         initializer?.let {
