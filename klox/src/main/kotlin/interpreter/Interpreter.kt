@@ -190,7 +190,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         val value = if(stmt.value != null) evaluate(stmt.value) else null
 
         // I agree with the book that while using an exception for control flow
-        // is bad form. The alternative in a recursive interpreter lime this
+        // is bad form. The alternative in a recursive interpreter like this
         // would be hard to implmenent, confusing to read and follow, and hard
         // to reason about. Some of the features of the exception are disabled to
         // try and lower the overhead of this.
