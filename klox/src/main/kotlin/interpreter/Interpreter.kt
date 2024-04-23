@@ -154,10 +154,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     private fun execute(stmt: Stmt?) {
-        if (stmt == null) {
-            return
-        }
-        stmt.accept(this)
+        stmt?.accept(this)
     }
 
     override fun visitBlockStmt(stmt: Stmt.Block) {
