@@ -1,3 +1,9 @@
+package interpreter
+
+import LoxCallable
+import LoxFunction
+import OutputHandler
+import Token
 import TokenType.*
 import ast.Expr
 import ast.Stmt
@@ -31,6 +37,22 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             }
         } catch (error: RuntimeError) {
             OutputHandler.runtimeError(error)
+        }
+    }
+
+    fun executeBlock(
+        statements: List<Stmt?>,
+        environment: Environment
+    ) {
+        val previous = this.environment
+        try {
+            this.environment = environment
+
+            for (statement in statements) {
+                execute(statement)
+            }
+        } finally {
+            this.environment = previous
         }
     }
 
@@ -142,24 +164,13 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         executeBlock(stmt.statements, Environment(environment))
     }
 
-    private fun executeBlock(
-        statements: List<Stmt?>,
-        environment: Environment
-    ) {
-        val previous = this.environment
-        try {
-            this.environment = environment
-
-            for (statement in statements) {
-                execute(statement)
-            }
-        } finally {
-            this.environment = previous
-        }
-    }
-
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
         evaluate(stmt.expression)
+    }
+
+    override fun visitFunctionStmt(stmt: Stmt.Function) {
+        val function = LoxFunction(stmt)
+        environment.define(stmt.name.lexeme, function)
     }
 
     override fun visitIfStmt(stmt: Stmt.If) {
@@ -248,9 +259,4 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     class RuntimeError(val token: Token, message: String): RuntimeException(message)
-
-    interface LoxCallable {
-        fun arity(): Int
-        fun call(interpreter: Interpreter, arguments: List<Any?>): Any?
-    }
 }

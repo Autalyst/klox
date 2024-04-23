@@ -1,3 +1,5 @@
+import interpreter.Interpreter
+
 var hadError = false
 var hadRuntimeError = false
 

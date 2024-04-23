@@ -19,9 +19,13 @@ class Parser(
     }
 
     // -- PRODUCTIONS -- //
-    // declaration → varDecl | statement
+    // declaration → funDecl | varDecl | statement
+    // funDecl →  "fun" function ;
     private fun declaration(): Stmt? {
         try {
+            if (match(FUN)) {
+                return function("function")
+            }
             if (match(VAR)) {
                 return varDeclaration()
             }
@@ -31,6 +35,30 @@ class Parser(
             synchronize()
             return null
         }
+    }
+
+    // function → IDENTIFIER "(" parameters? ")" block;
+    private fun function(kind: String): Stmt {
+        val name: Token = consume(IDENTIFIER, "Expect $kind name.")
+        consume(LEFT_PAREN, "Expect '(' after $kind name.")
+
+        val parameters = mutableListOf<Token>()
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.")
+                }
+
+                parameters.add(
+                    consume(IDENTIFIER, "Expect parameter name.")
+                )
+            } while (match(COMMA))
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.")
+
+        consume(LEFT_BRACE, "Expect '{' before $kind body.")
+        val body = block()
+        return Stmt.Function(name, parameters, body)
     }
 
     // varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;

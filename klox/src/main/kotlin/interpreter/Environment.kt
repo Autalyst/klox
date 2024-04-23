@@ -1,3 +1,7 @@
+package interpreter
+
+import Token
+
 class Environment(
     val enclosing: Environment? = null
 ) {
