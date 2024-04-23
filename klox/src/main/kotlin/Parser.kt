@@ -23,14 +23,11 @@ class Parser(
     // funDecl →  "fun" function ;
     private fun declaration(): Stmt? {
         try {
-            if (match(FUN)) {
-                return function("function")
+            return when {
+                match(FUN) -> function("function")
+                match(VAR) -> varDeclaration()
+                else -> statement()
             }
-            if (match(VAR)) {
-                return varDeclaration()
-            }
-
-            return statement()
         } catch (error: ParseError) {
             synchronize()
             return null
@@ -124,10 +121,7 @@ class Parser(
         consume(RIGHT_PAREN, "Expect ') after 'if' condition.")
 
         val thenBranch = statement()
-        var elseBranch: Stmt? = null
-        if (match(ELSE)) {
-            elseBranch = statement()
-        }
+        val elseBranch: Stmt? = if (match(ELSE)) statement() else null
 
         return Stmt.If(condition, thenBranch, elseBranch)
     }
