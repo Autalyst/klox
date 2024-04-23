@@ -2,8 +2,25 @@ import TokenType.*
 import ast.Expr
 import ast.Stmt
 
-class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
-    private var environment = Environment()
+class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
+    val globals = Environment()
+    private var environment = globals
+
+    init {
+        globals.define("clock", object: LoxCallable {
+            override fun arity(): Int {
+                return 0
+            }
+
+            override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
+               return System.currentTimeMillis() / 1000.0
+            }
+
+            override fun toString(): String {
+                return "<native fn>"
+            }
+        })
+    }
 
     fun interpret(statements: List<Stmt?>) {
         try {
@@ -50,6 +67,22 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
                 }
             }
             else -> null // unreachable
+        }
+    }
+
+    override fun visitCallExpr(expr: Expr.Call): Any? {
+        val callee = evaluate(expr.callee)
+
+        val arguments = expr.arguments.map { evaluate(it) }
+
+        return when (callee) {
+            is LoxCallable -> {
+                if (arguments.size != callee.arity()) {
+                    throw RuntimeError(expr.paren, "Expected ${callee.arity()} arguments but got ${arguments.size}.")
+                }
+                callee.call(this, arguments)
+            }
+            else -> throw RuntimeError(expr.paren, "Can only call functions and classes.")
         }
     }
 
@@ -215,4 +248,9 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     class RuntimeError(val token: Token, message: String): RuntimeException(message)
+
+    interface LoxCallable {
+        fun arity(): Int
+        fun call(interpreter: Interpreter, arguments: List<Any?>): Any?
+    }
 }
