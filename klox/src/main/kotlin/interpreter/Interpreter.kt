@@ -30,11 +30,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     fun interpret(statements: List<Stmt?>) {
         try {
-            for (statement in statements) {
-                if (statement != null) {
-                    execute(statement)
-                }
-            }
+            statements.forEach(this::execute)
         } catch (error: RuntimeError) {
             OutputHandler.runtimeError(error)
         }
@@ -47,10 +43,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         val previous = this.environment
         try {
             this.environment = environment
-
-            for (statement in statements) {
-                execute(statement)
-            }
+            statements.forEach(this::execute)
         } finally {
             this.environment = previous
         }
@@ -184,7 +177,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitReturnStmt(stmt: Stmt.Return) {
-        val value = if(stmt.value != null) evaluate(stmt.value) else null
+        val value = stmt.value?.let(this::evaluate)
 
         // I agree with the book that while using an exception for control flow
         // is bad form. The alternative in a recursive interpreter like this
@@ -195,11 +188,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitVarStmt(stmt: Stmt.Var) {
-        var value: Any? = null
-        if (stmt.initializer != null) {
-            value = evaluate(stmt.initializer)
-        }
-
+        val value: Any? = stmt.initializer?.let(this::evaluate)
         environment.define(stmt.name.lexeme, value)
     }
 
@@ -210,16 +199,11 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     private fun isTruthy(value: Any?): Boolean {
-        if (value == null)
-        {
-            return false
+        return when(value) {
+            is Boolean -> value
+            null -> false
+            else -> true
         }
-
-        if (value is Boolean) {
-            return value
-        }
-
-        return true
     }
 
     private fun isEqual(a: Any?, b: Any?): Boolean {
