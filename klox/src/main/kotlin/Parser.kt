@@ -73,29 +73,17 @@ class Parser(
         return Stmt.Var(name, initializer)
     }
 
-    // statement → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block
+    // statement → exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
     private fun statement(): Stmt {
-        if (match(FOR)) {
-            return forStatement()
+        return when {
+            match(FOR) -> forStatement()
+            match(IF) -> ifStatement()
+            match(PRINT) -> printStatement()
+            match(RETURN) -> returnStatement()
+            match(WHILE) -> whileStatement()
+            match(LEFT_BRACE) -> Stmt.Block(block())
+            else -> expressionStatement()
         }
-
-        if (match(IF)) {
-            return ifStatement()
-        }
-
-        if (match(PRINT)) {
-            return printStatement()
-        }
-
-        if (match(WHILE)) {
-            return whileStatement()
-        }
-
-        if (match(LEFT_BRACE)) {
-            return Stmt.Block(block())
-        }
-
-        return expressionStatement()
     }
 
     // forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
@@ -151,6 +139,14 @@ class Parser(
         val value = expression()
         consume(SEMICOLON, "Expect ';' after value.")
         return Stmt.Print(value)
+    }
+
+    // returnStmt → "return" expression? ";" ;
+    private fun returnStatement(): Stmt {
+        val keyword = previous()
+        val value: Expr? = if (!check(SEMICOLON)) expression() else null
+        consume(SEMICOLON, "Expect ';' after return value.")
+        return Stmt.Return(keyword, value)
     }
 
     // whileStmt → "while" "(" expression ")" statement ;

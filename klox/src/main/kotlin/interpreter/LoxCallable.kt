@@ -20,7 +20,12 @@ class LoxFunction(
             index, param -> environment.define(param.lexeme, arguments[index])
         }
 
-        interpreter.executeBlock(declaration.body, environment)
+        try {
+            interpreter.executeBlock(declaration.body, environment)
+        } catch (returnThrowable: Interpreter.Return) {
+            return returnThrowable.value
+        }
+
         return null
     }
 

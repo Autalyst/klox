@@ -186,6 +186,18 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         println(stringify(value))
     }
 
+    override fun visitReturnStmt(stmt: Stmt.Return) {
+        val value = if(stmt.value != null) evaluate(stmt.value) else null
+
+        // because there is a lot of stack unwinding here, an exception
+        // allows for this directly instead of returning through each
+        // layer. If feels hacky, however. Look into if there is
+        // a better option here later. For this toy language it is
+        // fine. Looking at the definition for our return, we are disabling
+        // stack traces and some other overhead.
+        throw Return(value)
+    }
+
     override fun visitVarStmt(stmt: Stmt.Var) {
         var value: Any? = null
         if (stmt.initializer != null) {
@@ -259,4 +271,5 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     class RuntimeError(val token: Token, message: String): RuntimeException(message)
+    class Return(val value: Any?): RuntimeException(null, null, false, false)
 }
