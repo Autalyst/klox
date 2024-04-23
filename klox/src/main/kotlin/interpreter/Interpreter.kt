@@ -189,12 +189,11 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     override fun visitReturnStmt(stmt: Stmt.Return) {
         val value = if(stmt.value != null) evaluate(stmt.value) else null
 
-        // because there is a lot of stack unwinding here, an exception
-        // allows for this directly instead of returning through each
-        // layer. If feels hacky, however. Look into if there is
-        // a better option here later. For this toy language it is
-        // fine. Looking at the definition for our return, we are disabling
-        // stack traces and some other overhead.
+        // I agree with the book that while using an exception for control flow
+        // is bad form. The alternative in a recursive interpreter lime this
+        // would be hard to implmenent, confusing to read and follow, and hard
+        // to reason about. Some of the features of the exception are disabled to
+        // try and lower the overhead of this.
         throw Return(value)
     }
 
