@@ -8,14 +8,15 @@ interface LoxCallable {
 }
 
 class LoxFunction(
-    private val declaration: Stmt.Function
+    private val declaration: Stmt.Function,
+    private val closure: Environment,
 ) : LoxCallable {
     override fun arity(): Int {
         return declaration.params.size
     }
 
     override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
-        val environment = Environment(interpreter.globals)
+        val environment = Environment(closure)
         declaration.params.forEachIndexed {
             index, param -> environment.define(param.lexeme, arguments[index])
         }
