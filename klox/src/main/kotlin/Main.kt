@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
 
 class Main {
     private val interpreter = Interpreter()
+    private val resolver = Resolver(interpreter)
 
     fun runFile(path: String) {
         val byteArray = Files.readAllBytes(Paths.get(path))
@@ -49,8 +50,11 @@ class Main {
     private fun run(source: String) {
         val tokens = Scanner(source).scanTokens()
         val statements = Parser(tokens).parse()
+        if (hadError) {
+            return
+        }
 
-        // detect syntax error
+        resolver.resolve(statements)
         if (hadError) {
             return
         }
