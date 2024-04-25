@@ -1,4 +1,7 @@
-import TokenType.*
+package parser
+
+import OutputHandler
+import parser.TokenType.*
 import ast.Expr
 import ast.Stmt
 
@@ -19,11 +22,12 @@ class Parser(
     }
 
     // -- PRODUCTIONS -- //
-    // declaration → funDecl | varDecl | statement
+    // declaration → classDecl | funDecl | varDecl | statement
     // funDecl →  "fun" function ;
     private fun declaration(): Stmt? {
         try {
             return when {
+                match(CLASS) -> classDeclaration()
                 match(FUN) -> function("function")
                 match(VAR) -> varDeclaration()
                 else -> statement()
@@ -32,6 +36,20 @@ class Parser(
             synchronize()
             return null
         }
+    }
+
+    // classDecl → "class" IDENTIFIER "{" function* "}" ;
+    private fun classDeclaration(): Stmt {
+        val name = consume(IDENTIFIER, "Expect class name.")
+        consume(LEFT_BRACE, "Expect '{' before class body.")
+
+        val methods: MutableList<Stmt.Function> = ArrayList()
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(function("method") as Stmt.Function)
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after class body.")
+        return Stmt.Class(name, methods)
     }
 
     // function → IDENTIFIER "(" parameters? ")" block;
@@ -172,7 +190,7 @@ class Parser(
         return assignment()
     }
 
-    // assignment → IDENTIFIER "=" assignment | logic_or ;
+    // assignment → ( call "." )? IDENTIFIER "=" assignment | logic_or ;
     private fun assignment(): Expr {
         val expr: Expr = logicOr()
 
@@ -183,6 +201,8 @@ class Parser(
             if (expr is Expr.Variable) {
                 val name = expr.name
                 return Expr.Assign(name, value)
+            } else if (expr is Expr.Get) {
+                return Expr.Set(expr.instance, expr.name, value)
             }
 
             error(equals, "Invalid assignment target.")
@@ -280,13 +300,16 @@ class Parser(
         return call()
     }
 
-    // call → primary ( "(" arguments? ")" )* ;
+    // call → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
     private fun call(): Expr {
         var expr = primary()
 
         while (true) {
             if (match(LEFT_PAREN)) {
                 expr = arguments(expr);
+            } else if (match(DOT)) {
+                val name = consume(IDENTIFIER, "Expect property name after '.'.")
+                expr = Expr.Get(expr, name)
             } else {
                 break
             }

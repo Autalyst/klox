@@ -1,10 +1,12 @@
 package interpreter
 
 import LoxCallable
+import LoxClass
 import LoxFunction
+import LoxInstance
 import OutputHandler
-import Token
-import TokenType.*
+import parser.Token
+import parser.TokenType.*
 import ast.Expr
 import ast.Stmt
 
@@ -114,6 +116,15 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         }
     }
 
+    override fun visitGetExpr(expr: Expr.Get): Any? {
+        val instance: Any? = evaluate(expr.instance)
+        if (instance is LoxInstance) {
+            return instance.get(expr.name)
+        }
+
+        throw RuntimeError(expr.name, "Only instances have properties")
+    }
+
     override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
         return evaluate(expr.expression)
     }
@@ -136,6 +147,18 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         }
 
         return evaluate(expr.right)
+    }
+
+    override fun visitSetExpr(expr: Expr.Set): Any? {
+        val instance = evaluate(expr.instance)
+
+        if (instance !is LoxInstance) {
+            throw RuntimeError(expr.name, "Only instances have fields.")
+        }
+
+        val value = evaluate(expr.value)
+        instance.set(expr.name, value)
+        return value
     }
 
     override fun visitUnaryExpr(expr: Expr.Unary): Any? {
@@ -170,6 +193,12 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitBlockStmt(stmt: Stmt.Block) {
         executeBlock(stmt.statements, Environment(environment))
+    }
+
+    override fun visitClassStmt(stmt: Stmt.Class) {
+        environment.define(stmt.name.lexeme, null)
+        val klass = LoxClass(stmt.name.lexeme)
+        environment.assign(stmt.name, klass)
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {

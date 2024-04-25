@@ -1,6 +1,7 @@
 import ast.Stmt
 import interpreter.Environment
 import interpreter.Interpreter
+import parser.Token
 
 interface LoxCallable {
     fun arity(): Int
@@ -32,5 +33,42 @@ class LoxFunction(
 
     override fun toString(): String {
         return "<fn ${declaration.name.lexeme}>"
+    }
+}
+
+class LoxClass(
+    val name: String
+): LoxCallable {
+    override fun arity(): Int {
+        return 0
+    }
+
+    override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
+        return LoxInstance(this)
+    }
+
+    override fun toString(): String {
+        return name
+    }
+}
+
+class LoxInstance(
+    private val klass: LoxClass,
+    private val fields: MutableMap<String, Any?> = HashMap()
+) {
+    fun get(name: Token): Any? {
+        if (!fields.containsKey(name.lexeme)) {
+            throw Interpreter.RuntimeError(name, "Undefined property '${name.lexeme}'.")
+        }
+
+        return fields[name.lexeme]
+    }
+
+    fun set(name: Token, value: Any?) {
+        fields[name.lexeme] = value
+    }
+
+    override fun toString(): String {
+        return "${klass.name} instance"
     }
 }

@@ -1,4 +1,6 @@
 import interpreter.Interpreter
+import parser.Token
+import parser.TokenType
 
 var hadError = false
 var hadRuntimeError = false

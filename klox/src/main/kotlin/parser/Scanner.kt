@@ -1,4 +1,7 @@
-import TokenType.*
+package parser
+
+import OutputHandler
+import parser.TokenType.*
 
 class Scanner(
     private val source: String

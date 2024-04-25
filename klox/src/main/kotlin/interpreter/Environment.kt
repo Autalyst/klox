@@ -1,6 +1,6 @@
 package interpreter
 
-import Token
+import parser.Token
 
 class Environment(
     val enclosing: Environment? = null
