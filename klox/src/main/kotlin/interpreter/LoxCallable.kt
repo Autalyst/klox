@@ -37,7 +37,8 @@ class LoxFunction(
 }
 
 class LoxClass(
-    val name: String
+    val name: String,
+    val methods: Map<String, LoxFunction>
 ): LoxCallable {
     override fun arity(): Int {
         return 0
@@ -45,6 +46,10 @@ class LoxClass(
 
     override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
         return LoxInstance(this)
+    }
+
+    fun findMethod(name: String): LoxFunction? {
+        return methods.getOrDefault(name, null)
     }
 
     override fun toString(): String {
@@ -57,11 +62,11 @@ class LoxInstance(
     private val fields: MutableMap<String, Any?> = HashMap()
 ) {
     fun get(name: Token): Any? {
-        if (!fields.containsKey(name.lexeme)) {
-            throw Interpreter.RuntimeError(name, "Undefined property '${name.lexeme}'.")
+        if (fields.containsKey(name.lexeme)) {
+            return fields[name.lexeme]
         }
 
-        return fields[name.lexeme]
+        return klass.findMethod(name.lexeme) ?: throw Interpreter.RuntimeError(name, "Undefined property '${name.lexeme}'.")
     }
 
     fun set(name: Token, value: Any?) {

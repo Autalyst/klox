@@ -9,7 +9,8 @@ class Resolver(
 ): Expr.Visitor<Unit>, Stmt.Visitor<Unit> {
     private enum class FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        METHOD
     }
 
     private val scopes = Stack<MutableMap<String, Boolean>>()
@@ -73,6 +74,10 @@ class Resolver(
     override fun visitClassStmt(stmt: Stmt.Class) {
         declare(stmt.name)
         define(stmt.name)
+
+        stmt.methods.forEach {
+            resolveFunction(it, FunctionType.METHOD)
+        }
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
