@@ -13,8 +13,14 @@ class Resolver(
         METHOD
     }
 
+    private enum class ClassType {
+        NONE,
+        CLASS
+    }
+
     private val scopes = Stack<MutableMap<String, Boolean>>()
     private var currentFunction = FunctionType.NONE
+    private var currentClass = ClassType.NONE
 
     override fun visitAssignExpr(expr: Expr.Assign) {
         resolve(expr.value)
@@ -53,6 +59,14 @@ class Resolver(
         resolve(expr.instance)
     }
 
+    override fun visitThisExpr(expr: Expr.This) {
+        if (currentClass == ClassType.NONE) {
+            OutputHandler.error(expr.keyword, "Can't use 'this' outside of a class.")
+        }
+
+        resolveLocal(expr, expr.keyword)
+    }
+
     override fun visitUnaryExpr(expr: Expr.Unary) {
         resolve(expr.right)
     }
@@ -66,18 +80,27 @@ class Resolver(
     }
 
     override fun visitBlockStmt(stmt: Stmt.Block) {
-        beginScope()
-        resolve(stmt.statements)
-        endScope()
+        scoped {
+            resolve(stmt.statements)
+        }
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
+        val enclosingClass = currentClass
+        currentClass = ClassType.CLASS
+
         declare(stmt.name)
         define(stmt.name)
 
-        stmt.methods.forEach {
-            resolveFunction(it, FunctionType.METHOD)
+        scoped {
+            scopes.peek()["this"] = true
+
+            stmt.methods.forEach {
+                resolveFunction(it, FunctionType.METHOD)
+            }
         }
+
+        currentClass = enclosingClass
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
@@ -147,23 +170,23 @@ class Resolver(
     ) {
         val enclosingFunction = currentFunction
         currentFunction = type
-        beginScope()
 
-        function.params.forEach {
-            declare(it)
-            define(it)
+        scoped {
+            function.params.forEach {
+                declare(it)
+                define(it)
+            }
+            resolve(function.body)
         }
-        resolve(function.body)
 
-        endScope()
         currentFunction = enclosingFunction
     }
 
-    private fun beginScope() {
+    private fun scoped(predicate: () -> Unit) {
         scopes.push(HashMap<String, Boolean>())
-    }
 
-    private fun endScope() {
+        predicate()
+
         scopes.pop()
     }
 
