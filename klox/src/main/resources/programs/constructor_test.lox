@@ -1,0 +1,19 @@
+class User {
+    init(name) {
+        this.name = name;
+        this.age = 20;
+    }
+
+    greet() {
+        return "Hello! My name is " + this.name + ". I am " + this.age;
+    }
+}
+
+var jeff = User("Jeff");
+jeff.age = 25;
+print jeff.greet(); // "Hello! My name is Jeff. I am 25"
+
+var jeffGreeting = jeff.greet;
+var bill = User("Bill");
+bill.greet = jeffGreeting; // overwrites function with other object's function (test closures, should print jeff's info)
+print bill.greet(); // "Hello! My name is Jeff. I am 25"

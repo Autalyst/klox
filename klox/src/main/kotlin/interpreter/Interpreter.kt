@@ -92,7 +92,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             PLUS -> {
                 when {
                     left is Double && right is Double -> left + right
-                    left is String && right is String -> left + right
+                    left is String || right is String -> stringify(left) + stringify(right)
                     else -> null // unreachable
                 }
             }
@@ -237,7 +237,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
         // I agree with the book that while using an exception for control flow
         // is bad form. The alternative in a recursive interpreter like this
-        // would be hard to implmenent, confusing to read and follow, and hard
+        // would be hard to implement, confusing to read and follow, and hard
         // to reason about. Some of the features of the exception are disabled to
         // try and lower the overhead of this.
         throw Return(value)
