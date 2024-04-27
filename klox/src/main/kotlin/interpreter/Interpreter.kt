@@ -203,7 +203,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         environment.define(stmt.name.lexeme, null)
 
         val methods = stmt.methods.associate {
-            it.name.lexeme to LoxFunction(it, environment)
+            it.name.lexeme to LoxFunction(it, environment, it.name.lexeme == "init")
         }
 
         val klass = LoxClass(stmt.name.lexeme, methods)
@@ -215,7 +215,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = LoxFunction(stmt, environment)
+        val function = LoxFunction(stmt, environment, false)
         environment.define(stmt.name.lexeme, function)
     }
 

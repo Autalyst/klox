@@ -11,6 +11,7 @@ interface LoxCallable {
 class LoxFunction(
     private val declaration: Stmt.Function,
     private val closure: Environment,
+    private val isInitializer: Boolean,
 ) : LoxCallable {
     override fun arity(): Int {
         return declaration.params.size
@@ -25,7 +26,14 @@ class LoxFunction(
         try {
             interpreter.executeBlock(declaration.body, environment)
         } catch (returnThrowable: Interpreter.Return) {
+            if (isInitializer) {
+                return closure.getAt(0, "this")
+            }
             return returnThrowable.value
+        }
+
+        if (isInitializer) {
+            return closure.getAt(0, "this")
         }
 
         return null
@@ -34,7 +42,7 @@ class LoxFunction(
     fun bind(instance: LoxInstance): LoxFunction {
         val environment = Environment(closure)
         environment.define("this", instance)
-        return LoxFunction(declaration, environment)
+        return LoxFunction(declaration, environment, isInitializer)
     }
 
     override fun toString(): String {
@@ -47,11 +55,19 @@ class LoxClass(
     private val methods: Map<String, LoxFunction>
 ): LoxCallable {
     override fun arity(): Int {
-        return 0
+        val initializer = findMethod("init") ?: return 0
+
+        return initializer.arity()
     }
 
     override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
-        return LoxInstance(this)
+        val instance = LoxInstance(this)
+        val initializer = findMethod("init")
+        initializer
+            ?.bind(instance)
+            ?.call(interpreter, arguments)
+
+        return instance
     }
 
     fun findMethod(name: String): LoxFunction? {

@@ -10,6 +10,7 @@ class Resolver(
     private enum class FunctionType {
         NONE,
         FUNCTION,
+        INITIALIZER,
         METHOD
     }
 
@@ -96,7 +97,12 @@ class Resolver(
             scopes.peek()["this"] = true
 
             stmt.methods.forEach {
-                resolveFunction(it, FunctionType.METHOD)
+                val declaration = if (it.name.lexeme == "init") {
+                    FunctionType.INITIALIZER
+                } else {
+                    FunctionType.METHOD
+                }
+                resolveFunction(it, declaration)
             }
         }
 
@@ -128,7 +134,14 @@ class Resolver(
         if (currentFunction == FunctionType.NONE) {
             OutputHandler.error(stmt.keyword, "Can't return from top-level code.")
         }
-        stmt.value?.let(::resolve)
+
+        if (stmt.value != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                OutputHandler.error(stmt.keyword, "Can't return a value from an initializer.")
+            }
+
+            resolve(stmt.value)
+        }
     }
 
     override fun visitVarStmt(stmt: Stmt.Var) {
