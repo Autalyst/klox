@@ -16,7 +16,8 @@ class Resolver(
 
     private enum class ClassType {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
     }
 
     private val scopes = Stack<MutableMap<String, Boolean>>()
@@ -60,6 +61,16 @@ class Resolver(
         resolve(expr.instance)
     }
 
+    override fun visitSuperExpr(expr: Expr.Super) {
+        if (currentClass == ClassType.NONE) {
+            OutputHandler.error(expr.keyword, "Can't use 'super' outside of a class.")
+        } else if (currentClass != ClassType.SUBCLASS) {
+            OutputHandler.error(expr.keyword, "Can't use 'super' in a class with no superclass.")
+        }
+
+        resolveLocal(expr, expr.keyword)
+    }
+
     override fun visitThisExpr(expr: Expr.This) {
         if (currentClass == ClassType.NONE) {
             OutputHandler.error(expr.keyword, "Can't use 'this' outside of a class.")
@@ -93,23 +104,34 @@ class Resolver(
         declare(stmt.name)
         define(stmt.name)
 
-        stmt.superclass?.let {
-            if (it.name.lexeme == stmt.name.lexeme) {
-                OutputHandler.error(stmt.superclass.name, "A class cannot inherit from itself.")
-            }
-            resolve(it)
-        }
-
-        scoped {
-            scopes.peek()["this"] = true
-
-            stmt.methods.forEach {
-                val declaration = if (it.name.lexeme == "init") {
-                    FunctionType.INITIALIZER
-                } else {
-                    FunctionType.METHOD
+        val withOptionalSuperclass = stmt.superclass?.let {
+            fun (predicate: () -> Unit) {
+                if (it.name.lexeme == stmt.name.lexeme) {
+                    OutputHandler.error(stmt.superclass.name, "A class cannot inherit from itself.")
                 }
-                resolveFunction(it, declaration)
+                currentClass = ClassType.SUBCLASS
+                resolve(it)
+                scopes.peek().put("super", true)
+
+                scoped {
+                    scopes.peek()["super"] = true
+                    predicate()
+                }
+            }
+        } ?: { x -> x()}
+
+        withOptionalSuperclass {
+            scoped {
+                scopes.peek()["this"] = true
+
+                stmt.methods.forEach {
+                    val declaration = if (it.name.lexeme == "init") {
+                        FunctionType.INITIALIZER
+                    } else {
+                        FunctionType.METHOD
+                    }
+                    resolveFunction(it, declaration)
+                }
             }
         }
 

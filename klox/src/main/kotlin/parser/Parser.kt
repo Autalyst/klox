@@ -325,7 +325,7 @@ class Parser(
         return expr;
     }
 
-    // primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+    // primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | "super" "." IDENTIFIER ;
     private fun primary(): Expr {
         when {
             match(FALSE) -> return Expr.Literal(false)
@@ -338,6 +338,12 @@ class Parser(
                 val expr = expression()
                 consume(RIGHT_PAREN, "Expect ')' after expression.")
                 return Expr.Grouping(expr)
+            }
+            match(SUPER) -> {
+                val keyword = previous()
+                consume(DOT, "Expect '.' after 'super'.")
+                val method = consume(IDENTIFIER, "Expect superclass method name.")
+                return Expr.Super(keyword, method)
             }
             else -> throw error(peek(), "Expect expression.")
         }
