@@ -93,6 +93,13 @@ class Resolver(
         declare(stmt.name)
         define(stmt.name)
 
+        stmt.superclass?.let {
+            if (it.name.lexeme == stmt.name.lexeme) {
+                OutputHandler.error(stmt.superclass.name, "A class cannot inherit from itself.")
+            }
+            resolve(it)
+        }
+
         scoped {
             scopes.peek()["this"] = true
 

@@ -52,6 +52,7 @@ class LoxFunction(
 
 class LoxClass(
     val name: String,
+    val superclass: LoxClass?,
     private val methods: Map<String, LoxFunction>
 ): LoxCallable {
     override fun arity(): Int {
@@ -71,7 +72,9 @@ class LoxClass(
     }
 
     fun findMethod(name: String): LoxFunction? {
-        return methods.getOrDefault(name, null)
+        return methods.getOrElse(name) {
+            superclass?.findMethod(name)
+        }
     }
 
     override fun toString(): String {

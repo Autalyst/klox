@@ -38,9 +38,16 @@ class Parser(
         }
     }
 
-    // classDecl → "class" IDENTIFIER "{" function* "}" ;
+    // classDecl → "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}" ;
     private fun classDeclaration(): Stmt {
         val name = consume(IDENTIFIER, "Expect class name.")
+
+        var superclass: Expr.Variable? = null
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expect superclass name.")
+            superclass = Expr.Variable(previous())
+        }
+
         consume(LEFT_BRACE, "Expect '{' before class body.")
 
         val methods: MutableList<Stmt.Function> = ArrayList()
@@ -49,7 +56,7 @@ class Parser(
         }
 
         consume(RIGHT_BRACE, "Expect '}' after class body.")
-        return Stmt.Class(name, methods)
+        return Stmt.Class(name, superclass, methods)
     }
 
     // function → IDENTIFIER "(" parameters? ")" block;
