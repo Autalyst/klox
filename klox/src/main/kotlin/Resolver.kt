@@ -111,7 +111,6 @@ class Resolver(
                 }
                 currentClass = ClassType.SUBCLASS
                 resolve(it)
-                scopes.peek().put("super", true)
 
                 scoped {
                     scopes.peek()["super"] = true

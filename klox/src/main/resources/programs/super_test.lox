@@ -1,0 +1,21 @@
+class A {
+    speak() {
+        print "Class A - Speak";
+    }
+}
+
+class B < A {
+    speak() {
+        print "Class B - Speak";
+        super.speak();
+    }
+}
+
+class C < B {
+    speak() {
+        print "Class C- Speak";
+        super.speak();
+    }
+}
+
+C().speak();
